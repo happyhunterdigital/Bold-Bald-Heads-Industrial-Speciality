@@ -38,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'case-studies', label: 'Case Studies' },
     { id: 'credentials', label: 'Certifications' },
     { id: 'contact', label: 'Contact Us' },
+    { id: 'distributors', label: 'Distributor Register' },
   ];
 
   const handleNavClick = (id: string) => {

@@ -200,6 +200,8 @@ export const Footer: React.FC<FooterProps> = ({
             <span>NRCS Compliant</span>
             <span>•</span>
             <span>Level 1 BBBEE</span>
+            <span>•</span>
+            <span>Distributor Register</span>
           </div>
         </div>
 

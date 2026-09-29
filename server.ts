@@ -14,7 +14,7 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: "20mb" }));
 
   // Initialize Gemini AI Client lazily or at server startup
   const getGeminiAI = () => {
@@ -63,6 +63,98 @@ async function startServer() {
         ...quoteData,
         referenceNumber,
         submittedAt: new Date().toISOString(),
+      },
+    });
+  });
+
+  // Distributor Registration Handler (Fabri Fresh SLA)
+  // Accepts JSON with base64-encoded files (ID + proof of payment) to avoid
+  // multipart deps. Files: [{ kind, name, type, size, dataUrl }]
+  app.post("/api/distributors", (req, res) => {
+    const {
+      fullName,
+      idNumber,
+      cellphone,
+      email,
+      address,
+      tradingLocation,
+      distributorType,
+      paymentMethod,
+      signedAt,
+      signatureName,
+      acceptTerms,
+      files,
+    } = req.body ?? {};
+
+    if (!fullName || !idNumber || !cellphone || !email || !address || !tradingLocation || !signedAt || !signatureName) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required distributor fields. Please complete all marked fields.",
+      });
+    }
+    if (!/^\d{13}$/.test(String(idNumber).trim())) {
+      return res.status(400).json({
+        success: false,
+        message: "SA ID number must be exactly 13 digits.",
+      });
+    }
+    if (!acceptTerms) {
+      return res.status(400).json({
+        success: false,
+        message: "You must accept the Distribution Terms (SLA) to register.",
+      });
+    }
+    const fileList: any[] = Array.isArray(files) ? files : [];
+    const hasId = fileList.some((f) => f?.kind === "id");
+    const hasPayment = fileList.some((f) => f?.kind === "payment");
+    if (!hasId) {
+      return res.status(400).json({
+        success: false,
+        message: "Identity Document upload is required.",
+      });
+    }
+    if (!hasPayment) {
+      return res.status(400).json({
+        success: false,
+        message: "Proof of payment upload is required.",
+      });
+    }
+    // Guard against oversized payloads (~5MB per file base64 => ~7MB encoded)
+    const totalBytes = fileList.reduce((sum, f) => sum + (Number(f?.size) || 0), 0);
+    if (totalBytes > 16 * 1024 * 1024) {
+      return res.status(413).json({
+        success: false,
+        message: "Uploaded documents exceed the 15MB total limit. Please compress and retry.",
+      });
+    }
+
+    const referenceNumber = `BBH-DIST-${Date.now().toString().slice(-6)}`;
+
+    // TODO: persist to CRM / object storage + notify info@bbhchemicals.co.za
+    console.log(
+      `[distributors] ${referenceNumber} ${fullName} (${distributorType ?? "Individual"}) ` +
+        `${tradingLocation} | ${paymentMethod ?? "EFT"} | files=${fileList.length}`
+    );
+
+    return res.json({
+      success: true,
+      referenceNumber,
+      message:
+        `Distributor application ${referenceNumber} received! Our sales office will verify your ID ` +
+        `and payment, then issue your starter-stock invoice. Delivery within 48 hours via The Courier Guy.`,
+      application: {
+        fullName,
+        idNumber: String(idNumber).slice(0, 6) + "******",
+        cellphone,
+        email,
+        tradingLocation,
+        distributorType,
+        paymentMethod,
+        signedAt,
+        referenceNumber,
+        submittedAt: new Date().toISOString(),
+        fileCount: fileList.length,
+        fileNames: fileList.map((f) => f?.name),
       },
     });
   });

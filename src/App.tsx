@@ -160,9 +160,12 @@ export default function App() {
 
         {/* Company History & Profile */}
         <AboutSection />
-
-        {/* Contact Us & On-Site Consultation Form */}
+{/* Contact Us & On-Site Consultation Form */}
         <ContactSection />
+
+        {/* Distributor Registration */}
+        <DistributorSection />
+
       </main>
 
       {/* Footer */}
