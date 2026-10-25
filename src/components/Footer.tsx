@@ -195,6 +195,13 @@ export const Footer: React.FC<FooterProps> = ({
             © {new Date().getFullYear()} Bold Bald Heads Industrial & Speciality Chemicals (Pty) Ltd. All Rights Reserved.
           </div>
           <div className="flex items-center gap-4 font-bold">
+            <button
+              type="button"
+              onClick={() => document.dispatchEvent(new Event('hh:open-consent'))}
+              className="underline decoration-dotted hover:text-white transition-colors"
+            >
+              Cookie settings
+            </button>
             <span>ISO 9001 Quality</span>
             <span>•</span>
             <span>NRCS Compliant</span>
